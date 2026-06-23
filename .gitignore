@@ -1,0 +1,13 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# 환경설정 (비밀) — .env.example 은 올리되 .env 는 제외
+.env
+
+# SQLite 잔재
+*.db
+
+# macOS
+.DS_Store
