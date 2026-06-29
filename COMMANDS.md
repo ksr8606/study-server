@@ -2,23 +2,33 @@
 
 > 까먹으면 여기서 찾으면 됨. (전제: `~/study/server` 에서, `.venv` 활성화 상태)
 
-## 🚀 서버 실행
+## 🚀 서버 실행 (로컬 개발 — venv, 코드 즉시 반영)
 ```bash
 source .venv/bin/activate            # 가상환경 켜기 (프롬프트에 (.venv) 뜸)
 uvicorn app.main:app --reload        # 서버 실행 (app.main = app/main.py, 점 표기!)
 # → http://127.0.0.1:8000/docs
+# ※ 컨테이너로 띄우려면 ↓ "컨테이너 (Docker Compose)" 섹션
 ```
 
-## 🐳 DB 컨테이너 (Docker)
+## 🐳 컨테이너 (Docker Compose) — 앱 + DB
 ```bash
-docker compose up -d                 # DB 켜기
+docker compose up -d --build         # 앱 빌드 + 앱·DB 둘 다 띄우기 (코드 바꿨을 때)
+docker compose up -d                 # 빌드 없이 띄우기
 docker compose down                  # 끄기 (볼륨=데이터 유지)
 docker compose down -v               # 끄기 + 데이터 완전 삭제
-docker compose ps                    # 이 프로젝트 컨테이너 상태
-docker ps                            # 실행 중 컨테이너 전부
-docker ps -a                         # 멈춘 것까지
-docker logs study-postgres           # DB 로그 (에러 확인)
-docker start study-postgres          # (compose 안 쓰고) 그냥 켜기
+docker compose ps                    # 컨테이너 상태 (db, app 둘 다 Up 확인)
+docker compose logs -f app           # 앱 로그 실시간 (-f=follow; curl 날리면 요청 찍힘)
+docker compose logs db               # DB 로그
+docker compose top app               # 앱 컨테이너 안 프로세스 (uvicorn)
+docker compose exec app sh           # 앱 컨테이너 안 셸 진입
+docker compose exec app alembic upgrade head   # 컨테이너 안에서 마이그레이션
+docker ps -a                         # (전체) 멈춘 것까지 모든 컨테이너
+```
+
+## 🔍 어디서 도는지 확인 (로컬 vs 컨테이너)
+```bash
+lsof -i :8000                        # 8000 주인: docker-proxy=컨테이너 / python=로컬
+ps aux | grep "[u]vicorn"            # 로컬 uvicorn 직접 떠있나 (없어야=컨테이너만)
 ```
 
 ## 🗄️ DB 내부 (psql)

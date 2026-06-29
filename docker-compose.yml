@@ -11,5 +11,17 @@ services:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
 
+  app:                                # ← 여기부터 추가
+    build: .                          # Dockerfile 로 이미지 빌드
+    container_name: study-app
+    ports:
+      - "8000:8000"                   # 호스트 8000 → 앱 컨테이너 8000
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:studypass@db:5432/studydb
+      SECRET_KEY: ${SECRET_KEY}       # .env 의 SECRET_KEY 를 compose 가 읽어 치환
+    depends_on:
+      - db
+    restart: unless-stopped
+
 volumes:
   pgdata:
