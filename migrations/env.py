@@ -6,7 +6,8 @@ from sqlalchemy import pool
 from alembic import context
 
 from sqlmodel import SQLModel
-from app.main import settings   # app.main import → Item 모델이 SQLModel.metadata 에 등록됨
+from app.config import settings
+from app import models   # noqa: F401 — 모델을 SQLModel.metadata 에 등록 (autogenerate 가 감지)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
