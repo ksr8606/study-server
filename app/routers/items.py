@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends
+from typing import Optional
+
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlmodel import Session, select
 from sqlalchemy.exc import IntegrityError
 
@@ -7,7 +9,6 @@ from app.dependencies import get_current_user
 from app.models import Item, ItemCreate, ItemPublic, ItemUpdate, User
 
 router = APIRouter(prefix="/items", tags=["items"])
-
 
 @router.post("", response_model=ItemPublic)
 def create_item(
@@ -23,8 +24,28 @@ def create_item(
 
 
 @router.get("", response_model=list[ItemPublic])
-def list_items(session: Session = Depends(get_session)):
-    return session.exec(select(Item)).all()
+def list_items(
+    session: Session = Depends(get_session),
+    q: Optional[str] = None,                    # 이름 검색 (부분 일치)
+    in_stock: Optional[bool] = None,            # 재고 필터
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    skip: int = 0,                              # 건너뛸 개수 (페이지네이션)
+    limit: int = Query(default=20, le=100),     # 가져올 개수 (최대 100 제한)
+):
+    query = select(Item)
+    
+    if q is not None:
+        query = query.where(Item.name.contains(q))  #SQL: name LIKE '%q%'
+    if in_stock is not None:
+        query = query.where(Item.in_stock == in_stock)
+    if min_price is not None:
+        query = query.where(Item.price >= min_price)
+    if max_price is not None:
+        query = query.where(Item.price <= max_price)
+    query = query.offset(skip).limit(limit)
+
+    return session.exec(query).all()
 
 
 @router.get("/{item_id}", response_model=ItemPublic)
