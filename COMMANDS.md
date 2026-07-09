@@ -77,6 +77,34 @@ ls migrations/versions/                       # 목록
 cat $(ls -t migrations/versions/*.py | head -1)   # 최신 파일 내용
 ```
 
+## 🌐 API 호출 (curl) — 인증 & 조회
+```bash
+# 로그인 → 토큰 (python3로 access_token 추출)
+TOKEN=$(curl -s -X POST localhost:8000/login -H "Content-Type: application/json" \
+  -d '{"username":"chris","password":"..."}' \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+
+# 보호된 API — 토큰 첨부 (Bearer 접두어 필수)
+curl localhost:8000/users/me -H "Authorization: Bearer $TOKEN"
+curl -X POST localhost:8000/items -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" -d '{"name":"coffee","price":4500}'
+
+# 조회 (검색·필터·페이지네이션)
+curl "localhost:8000/items?q=coffee"                 # 이름 검색(부분일치)
+curl "localhost:8000/items?in_stock=false"           # 재고 필터
+curl "localhost:8000/items?min_price=3000&limit=5"   # 가격 필터 + 개수 제한
+curl "localhost:8000/items?skip=5&limit=5"           # 페이지네이션(다음 5개)
+curl -G localhost:8000/items --data-urlencode "q=커피"   # 한글은 인코딩 필요
+```
+
+## 🧪 테스트 (pytest)
+```bash
+pip install pytest httpx      # 최초 1회
+pytest -v                     # tests/ 의 test_*.py 자동 실행 (-v=자세히)
+pytest tests/test_users.py    # 특정 파일만
+pytest -k "create_user"       # 이름에 create_user 든 테스트만
+```
+
 ## 📦 환경 / 패키지
 ```bash
 python3 -m venv .venv                 # 가상환경 생성

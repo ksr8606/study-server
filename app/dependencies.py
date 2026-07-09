@@ -18,7 +18,8 @@ def get_current_user(
 ) -> User:
     try:
         username = decode_access_token(creds.credentials)
-    except jwt.InvalidTokenError:                       # 서명 틀림·만료 등 모두 여기로
+    # 서명 틀림·만료 등 모두 여기로
+    except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="토큰이 유효하지 않아")
 
     user = session.exec(select(User).where(User.username == username)).first()

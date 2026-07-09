@@ -64,6 +64,10 @@ docker-compose.yml   # 로컬: 앱 + DB 한 방에
 - **배포(PaaS/Render)**: GitHub App 연동 → **main push 시 자동 재배포** / 관리형 PostgreSQL / 환경변수(DATABASE_URL·SECRET_KEY) 주입 / 무료 플랜은 Shell 없어 **Start Command에 `alembic upgrade head &&` 묶어** 마이그레이션
 - **Render 빌드 방식**: native Python(requirements.txt + Start Command) vs Docker(Dockerfile) — 둘 중 택. (배포는 "컨테이너 전송"이 아니라 "설계도(코드+Dockerfile)로 클라우드가 빌드")
 - **VPS 배포(로컬 VM/Multipass 실습)**: SSH접속(=multipass shell) → apt update → Docker 설치 → git clone → docker compose(앱+DB) → nginx 리버스 프록시(80→8000) → 프로세스 관리(restart: unless-stopped + 재부팅 자동복구). HTTPS는 공인 도메인 필요라 개념만(Render로 실전). ★ 맥과 VM은 별개 서버 — VM 안에 Docker 따로 설치, 실제 VPS와 동일한 명령
+- **조회 다듬기**: 쿼리 파라미터로 검색(name LIKE)·필터(in_stock·가격대)·페이지네이션(skip/limit, `limit`은 상한 `le=100`). `select`에 조건부 `.where()` 쌓기. ★ `.contains()`(SQLAlchemy 메서드=SQL LIKE) ≠ `.__contains__()`(파이썬 매직, 쓰면 에러). URL의 한글은 인코딩 필요(curl은 `-G --data-urlencode`)
+- **자동배포(CI/CD의 CD)**: git push → GitHub이 webhook으로 Render에 알림 → 자동 빌드·배포. webhook = "서버 간 푸시 알림"
+- **DB 관계(Relationship)**: FK(`user_id`, DB 저장) vs Relationship(`owner`/`items`, ORM 편의=FK를 객체로 자동조회). `back_populates`로 양방향. Relationship은 DB 안 바꿔 → 마이그레이션 불필요. 라우트는 `/users/me/items`(정적/변수 경로 충돌 피함)
+- **N+1 문제**: 목록(1) + 각 항목 관계 조회를 하나씩(N) = N+1 쿼리 (lazy 로드 = 접근할 때마다 따로). 앱의 "리스트 셀마다 API 호출"과 동일. 해결 `selectinload` = owner를 후행 2단계로 `IN` 한 번에. ★ ORM 자동 아님 → 개발자가 "응답에 관계 목록 들어가면 eager 로드" 판단해야 (실무 성능버그 주범)
 
 ## 🛠️ 자주 쓰는 명령
 ```bash
@@ -92,12 +96,14 @@ git add . && git commit -m "메시지" && git push
 ```
 
 ## ⏭️ 다음 후보
-- [x] 배포 (PaaS/Render) — 인터넷 공개 완료 ✓ (https://study-server-q81v.onrender.com)
-- [x] Render Docker 전환 — 재생성 필요해서 스킵 (native 유지, 잘 돎)
-- [x] VPS 배포 (로컬 VM/Multipass) — SSH·Docker·nginx·프로세스관리 완주 ✓ (HTTPS는 개념만)
-- [ ] 조회 다듬기 (검색·필터·페이지네이션)  ← **다음 후보**
-- [ ] 동시성/트랜잭션 깊이 파기
-- [ ] 정리: 로컬 `docker-compose.yml` restart 등 → git push 로 GitHub 통일
+- [x] 배포 (PaaS/Render + VPS/Multipass) — 인터넷 공개 완료 ✓ (https://study-server-q81v.onrender.com)
+- [x] 조회 다듬기 (검색·필터·페이지네이션) ✓ — Render 자동배포 반영
+- [x] DB 관계(Relationship) + N+1 문제 ✓
+- [ ] 동시성/트랜잭션 깊이 파기  ← **다음 후보**
+- [ ] 에러처리·로깅 (운영 디버깅)
+- [ ] 조회 완성 (정렬 `order_by` + 응답에 `total`)
+- [ ] 비동기(async) — 중급
+- [ ] **테스트** (pytest) — 맨 마지막에 (코드 확정 후)
 
 ## 📚 같은 폴더 다른 문서
 - `guide.md` — 서버 개발 전체 큰 그림 (개념편)

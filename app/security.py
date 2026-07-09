@@ -19,7 +19,8 @@ def verify_password(password: str, hashed: str) -> bool:
 # JWT 발급: payload(누구·만료)를 SECRET_KEY 로 서명한 토큰 문자열 반환
 def create_access_token(username: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
-    payload = {"sub": username, "exp": expire}   # sub=누구, exp=만료시각
+    # sub=누구, exp=만료시각
+    payload = {"sub": username, "exp": expire}
     return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
 
 
